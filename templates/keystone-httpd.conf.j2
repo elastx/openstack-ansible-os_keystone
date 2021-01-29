@@ -31,7 +31,51 @@ Listen {{ keystone_service_port }}
     SSLOptions +StdEnvVars +ExportCertData
     {% endif %}
 
-    {% if keystone_sp != {} -%}
+    {% if keystone_sp_apache_mod_auth_openidc -%}
+    OIDCClaimPrefix "{{ keystone_sp.trusted_idp_list.0.oidc_claim_prefix | default('OIDC-') }}"
+    OIDCResponseType "{{ keystone_sp.trusted_idp_list.0.oidc_resp_type | default('id_token') }}"
+    OIDCScope "{{ keystone_sp.trusted_idp_list.0.idc_scope | default('openid email profile') }}"
+    OIDCProviderMetadataURL {{ keystone_sp.trusted_idp_list.0.oidc_provider_metadata_url }}
+    OIDCClientID {{ keystone_sp.trusted_idp_list.0.oidc_client_id }}
+    OIDCClientSecret {{ keystone_sp.trusted_idp_list.0.oidc_client_secret }}
+    OIDCCryptoPassphrase {{ keystone_sp.trusted_idp_list.0.oidc_crypto_passphrase }}
+    OIDCRedirectURI {{ keystone_sp.trusted_idp_list.0.oidc_redirect_uri }}
+    {% if keystone_sp.trusted_idp_list.0.oidc_auth_verify_jwks_uri is defined -%}
+    OIDCOAuthVerifyJwksUri {{ keystone_sp.trusted_idp_list.0.oidc_auth_verify_jwks_uri }}
+    {% endif -%}
+    {% if keystone_sp.trusted_idp_list.0.oidc_outgoing_proxy is defined -%}
+    OIDCOutgoingProxy {{ keystone_sp.trusted_idp_list.0.oidc_outgoing_proxy }}
+    {% endif -%}
+    {% if keystone_cache_servers | length > 0 -%}
+    OIDCCacheType memcache
+    OIDCMemCacheServers "{{ keystone_cache_servers | join(' ') }}"
+    {% endif %}
+    {% if keystone_sp.trusted_idp_list.0.oidc_auth_request_params is defined -%}
+    OIDCAuthRequestParams {{ keystone_sp.trusted_idp_list.0.oidc_auth_request_params }}
+    {% endif %}
+    {% if keystone_sp.trusted_idp_list.0.oidc_state_max_number_of_cookies is defined -%}
+    OIDCStateMaxNumberOfCookies {{ keystone_sp.trusted_idp_list.0.oidc_state_max_number_of_cookies }}
+    {% endif %}
+    {% if keystone_sp.trusted_idp_list.0.oidc_default_url is defined -%}
+    OIDCDefaultURL {{ keystone_sp.trusted_idp_list.0.oidc_default_url }}
+    {% endif %}
+
+    <Location /v3/OS-FEDERATION/identity_providers/{{ keystone_sp.trusted_idp_list.0.name }}/protocols/openid/auth>
+      Require valid-user
+      AuthType auth-openidc
+    </Location>
+
+    <Location /v3/auth/OS-FEDERATION/websso/openid>
+      Require valid-user
+      AuthType openid-connect
+    </Location>
+
+    <Location /v3/auth/OS-FEDERATION/identity_providers/{{ keystone_sp.trusted_idp_list.0.name }}/protocols/openid/websso>
+      Require valid-user
+      AuthType openid-connect
+    </Location>
+    {% endif %}
+    {% if keystone_sp_apache_mod_shib -%}
     ShibURLScheme {{ keystone_service_publicuri_proto }}
 
     <Location /Shibboleth.sso>

@@ -47,6 +47,25 @@
   tags:
     - always
 
+- name: Fact for apache module shibboleth to be installed
+  set_fact:
+    keystone_sp_apache_mod_shib:
+      "{{ (keystone_sp != {} and
+      (keystone_sp.apache_mod is undefined or
+      (keystone_sp.apache_mod is defined and keystone_sp.apache_mod != 'mod_auth_openidc'))
+      ) | ternary('true', 'false') }}"
+  tags:
+    - always
+
+- name: Fact for apache module mod_auth_openidc to be installed
+  set_fact:
+    keystone_sp_apache_mod_auth_openidc:
+      "{{ (keystone_sp != {} and
+      keystone_sp.apache_mod is defined and keystone_sp.apache_mod == 'mod_auth_openidc')
+      | ternary('true', 'false') }}"
+  tags:
+    - always
+
 - include: keystone_pre_install.yml
   tags:
     - keystone-install
