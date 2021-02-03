@@ -105,7 +105,7 @@
 
 - include: keystone_federation_sp_setup.yml
   static: no
-  when: keystone_sp != {}
+  when: keystone_sp != {} and (keystone_sp.apache_mod is undefined or (keystone_sp.apache_mod is defined and keystone_sp.apache_mod != 'mod_auth_openidc'))
   tags:
     - keystone-config
 
