@@ -14,7 +14,9 @@ Listen {{ keystone_service_port }}
 
     Header set X-Content-Type-Options "nosniff"
     Header set X-XSS-Protection "1; mode=block"
-    Header set Content-Security-Policy "default-src 'self' https: wss:;"
+    {% if keystone_sp != {} -%}
+    Header set Content-Security-Policy "script-src 'sha256-oBahlBFQem+nMs1JwgcBB03Hy8nRh5e8qEGTOcxmAuM=';"
+    {% endif -%}
     Header set X-Frame-Options "{{ keystone_x_frame_options | default ('DENY') }}"
 
     {% if keystone_ssl | bool and keystone_service_internaluri_proto == "https" -%}
@@ -29,17 +31,22 @@ Listen {{ keystone_service_port }}
     SSLHonorCipherOrder On
     SSLCipherSuite {{ keystone_ssl_cipher_suite }}
     SSLOptions +StdEnvVars +ExportCertData
-    {% endif %}
+    {% endif -%}
 
     {% if keystone_sp_apache_mod_auth_openidc -%}
     OIDCClaimPrefix "{{ keystone_sp.trusted_idp_list.0.oidc_claim_prefix | default('OIDC-') }}"
     OIDCResponseType "{{ keystone_sp.trusted_idp_list.0.oidc_resp_type | default('id_token') }}"
     OIDCScope "{{ keystone_sp.trusted_idp_list.0.idc_scope | default('openid email profile') }}"
+    OIDCRemoteUserClaim email
     OIDCProviderMetadataURL {{ keystone_sp.trusted_idp_list.0.oidc_provider_metadata_url }}
     OIDCClientID {{ keystone_sp.trusted_idp_list.0.oidc_client_id }}
     OIDCClientSecret {{ keystone_sp.trusted_idp_list.0.oidc_client_secret }}
     OIDCCryptoPassphrase {{ keystone_sp.trusted_idp_list.0.oidc_crypto_passphrase }}
-    OIDCRedirectURI {{ keystone_sp.trusted_idp_list.0.oidc_redirect_uri }}
+    {% if keystone_sp.trusted_idp_list.0.oidc_redirect_uris is defined -%}
+    {% for redirect_uri in keystone_sp.trusted_idp_list.0.oidc_redirect_uris -%}
+    OIDCRedirectURI {{ redirect_uri }}
+    {% endfor -%}
+    {% endif -%}
     {% if keystone_sp.trusted_idp_list.0.oidc_auth_verify_jwks_uri is defined -%}
     OIDCOAuthVerifyJwksUri {{ keystone_sp.trusted_idp_list.0.oidc_auth_verify_jwks_uri }}
     {% endif -%}
@@ -75,7 +82,7 @@ Listen {{ keystone_service_port }}
       AuthType openid-connect
     </Location>
     {% endif %}
-    {% if keystone_sp_apache_mod_shib -%}
+    {%- if keystone_sp_apache_mod_shib -%}
     ShibURLScheme {{ keystone_service_publicuri_proto }}
 
     <Location /Shibboleth.sso>
