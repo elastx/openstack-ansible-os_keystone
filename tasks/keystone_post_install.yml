@@ -99,19 +99,19 @@
   when:
     - keystone_policy_overrides != {}
 
-- name: Copy Keystone Federation SP SSO callback template
-  copy:
-    src: >-
-        {{ (_user_provided_config_files['results'][2]['stat']['exists'] | bool) |
-           ternary(keystone_sso_callback_file_path,
-           keystone_config_cache_path ~ '/' ~ keystone_sso_callback_file_path | basename) }}
-    dest: "/etc/keystone/sso_callback_template.html"
-    owner: "{{ keystone_system_user_name }}"
-    group: "{{ keystone_system_group_name }}"
-    mode: "0644"
-  when:
-    - keystone_sp != {}
-  notify:
-    - Manage LB
-    - Restart uWSGI
-    - Restart web server
+#- name: Copy Keystone Federation SP SSO callback template
+#  copy:
+#    src: >-
+#        {{ (_user_provided_config_files['results'][2]['stat']['exists'] | bool) |
+#           ternary(keystone_sso_callback_file_path,
+#           keystone_config_cache_path ~ '/' ~ keystone_sso_callback_file_path | basename) }}
+#    dest: "/etc/keystone/sso_callback_template.html"
+#    owner: "{{ keystone_system_user_name }}"
+#    group: "{{ keystone_system_group_name }}"
+#    mode: "0644"
+#  when:
+#    - keystone_sp != {}
+#  notify:
+#    - Manage LB
+#    - Restart uWSGI
+#    - Restart web server
