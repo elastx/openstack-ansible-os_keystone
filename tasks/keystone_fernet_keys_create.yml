@@ -34,4 +34,4 @@
                                        --keystone-group "{{ keystone_system_group_name }}"
   become: yes
   become_user: "{{ keystone_system_user_name }}"
-  when: _fernet_keys.stat.exists
+  when: _fernet_keys.stat.exists and disable_fernet_rotate is not defined
